@@ -68,6 +68,7 @@ android {
 
 dependencies {
     def lifecycle_version = "2.3.1"
+    def arrow_version = "0.10.4"
 
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
@@ -82,7 +83,11 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
 
     // Add Functional Programming Paradigms
-//    implementation 'com.github.MarioAriasC:funKTionale:1.2'
+    implementation "io.arrow-kt:arrow-core:$arrow_version"
+    implementation "io.arrow-kt:arrow-fx:$arrow_version"
+    implementation "io.arrow-kt:arrow-optics:$arrow_version"
+    implementation "io.arrow-kt:arrow-syntax:$arrow_version"
+    kapt    "io.arrow-kt:arrow-meta:$arrow_version"
 
     // Koin DI Manager
     implementation "org.koin:koin-android:$koin_version"

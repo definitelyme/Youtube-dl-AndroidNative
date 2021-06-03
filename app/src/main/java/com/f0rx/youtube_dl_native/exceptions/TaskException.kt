@@ -3,8 +3,15 @@ package com.f0rx.youtube_dl_native.exceptions
 class TaskException private constructor(
     override var code: String?,
     override var message: String?,
-) : ILibraryException(message) {
-    private constructor(builder: Builder) : this(builder.message, builder.code)
+    override var cause: Throwable?,
+    override var trace: Array<StackTraceElement>,
+) : ILibraryException(message, cause) {
+    private constructor(builder: Builder) : this(
+        builder.code,
+        builder.message,
+        builder.cause,
+        builder.trace
+    )
 
     companion object {
         inline fun define(
@@ -18,6 +25,8 @@ class TaskException private constructor(
         var message: String?,
     ) {
         var code: String? = null
+        var cause: Throwable? = null
+        lateinit var trace: Array<StackTraceElement>
 
         fun build() = TaskException(this)
     }

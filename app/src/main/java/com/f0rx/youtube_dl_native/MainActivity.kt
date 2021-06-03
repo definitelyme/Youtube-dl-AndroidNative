@@ -5,9 +5,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.f0rx.youtube_dl_native.domain.FormatCommand
 import com.f0rx.youtube_dl_native.domain.format.Format
 import com.f0rx.youtube_dl_native.domain.format.FormatBuilder
-import com.f0rx.youtube_dl_native.domain.FormatCommand
 import com.f0rx.youtube_dl_native.domain.format.format_fields.*
 import com.f0rx.youtube_dl_native.repositories.DownloadRepository
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -20,9 +20,6 @@ class MainActivity : AppCompatActivity() {
     private val repository: DownloadRepository by inject()
 
     private val scope = CoroutineScope(Job())
-    private val handler = CoroutineExceptionHandler { _, e ->
-        Log.w(ILibrary.kTag, e.message ?: "failed to initialize youtubedl-android", e)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,8 +46,8 @@ class MainActivity : AppCompatActivity() {
             .append(builder2)
             .generate()
 
-        scope.launch(handler) {
-            val response = repository.start(
+        scope.launch {
+            val response = repository.download(
                 Uri.parse("https://www.youtube.com/watch?v=KzD3qlnhVZA"),
                 commands = arrayListOf(command),
                 path = getDir("videos", Context.MODE_PRIVATE),
@@ -62,8 +59,9 @@ class MainActivity : AppCompatActivity() {
             )
 
             println("The output here")
-            println(response.commands)
-//            println(response.out)
+            response.fold(
+                { println(it.message) }
+            ) { println(it.out) }
         }
     }
 }

@@ -1,27 +1,31 @@
 package com.f0rx.youtube_dl_native.repositories
 
 import android.net.Uri
+import arrow.core.orNull
 import com.f0rx.youtube_dl_native.ILibrary
 import com.f0rx.youtube_dl_native.utils.padIf
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
-abstract class IRepository {
-    protected abstract var library: ILibrary
+abstract class BaseRepository(open var library: ILibrary) {
     var fileName: String? = null
     var extension: String? = null
 
     fun fileName(uri: String): String? {
         val metadata = library.metadata(Uri.parse(uri))
 
-        fileName = metadata.fulltitle?.padIf(
-            condition = !metadata.fulltitle.isNullOrBlank(),
-            end = metadata.ext?.padIf(start = ".") ?: ""
-        ) ?: metadata.title?.padIf(
-            condition = !metadata.title.isNullOrBlank(),
-            end = metadata.ext?.padIf(start = ".") ?: ""
-        )
+        metadata.fold(
+            {},
+        ) {
+            fileName = it.fulltitle?.padIf(
+                condition = !it.fulltitle.isNullOrBlank(),
+                end = it.ext?.padIf(start = ".") ?: ""
+            ) ?: it.title?.padIf(
+                condition = !it.title.isNullOrBlank(),
+                end = it.ext?.padIf(start = ".") ?: ""
+            )
+        }
 
         return fileName
     }
@@ -46,6 +50,6 @@ abstract class IRepository {
 
         val metadata = library.metadata(Uri.parse(uri))
 
-        return metadata.ext?.padIf(start = ".")
+        return metadata.orNull()?.ext?.padIf(start = ".")
     }
 }
