@@ -6,8 +6,8 @@ import com.f0rx.youtube_dl_native.ILibrary
 import com.f0rx.youtube_dl_native.domain.FlagCommand
 import com.f0rx.youtube_dl_native.domain.ICommand
 import com.f0rx.youtube_dl_native.domain.OutputCommand
+import com.f0rx.youtube_dl_native.domain.response.CommandResponse
 import com.f0rx.youtube_dl_native.exceptions.ILibraryException
-import com.f0rx.youtube_dl_native.models.CommandResponse
 import com.f0rx.youtube_dl_native.utils.padIf
 import java.io.File
 import kotlin.io.path.Path
@@ -16,27 +16,96 @@ import kotlin.io.path.nameWithoutExtension
 class DownloadRepository(override var library: ILibrary) : BaseRepository(library) {
     fun download(
         uri: Uri,
-        path: File,
-        commands: ArrayList<ICommand> = arrayListOf(),
-        callback: ((Float, Long) -> Unit),
-        name: String? = null
+        downloadPath: File,
+        name: String? = null,
+        commands: String = "",
+    ): Either<ILibraryException, CommandResponse> =
+        download(uri, downloadPath, name, commands, null)
+
+    fun download(
+        uri: Uri,
+        downloadPath: File,
+        name: String? = null,
+        commands: String = "",
+        callback: ((Float, Long) -> Unit)?,
     ): Either<ILibraryException, CommandResponse> {
-        val filename =
-            extension("$uri")?.let {
-                name?.let { it1 ->
-                    Path(it1).nameWithoutExtension.padIf(
-                        condition = !name.isNullOrEmpty(),
-                        end = it,
-                    )
-                }
+        val filename = getFileName(uri = uri, custom = name, null)
+
+        // Add Output command (for download requests only)
+        val concat = "$commands -o ${downloadPath.absolutePath}${File.separator}$filename"
+
+        return library.execute(
+            uri, concat, callback
+        ).map {
+            CommandResponse.define(
+                message = it.message,
+                commands = it.commands!!,
+                elapsedTime = it.elapsedTime!!,
+                out = it.out!!
+            ) {
+                exitCode = it.exitCode
+                error = it.error
             }
-                ?: fileName("$uri")
+        }
+    }
 
-        // Add to List of commands
-        commands.add(OutputCommand("${path.absolutePath}${File.separator}$filename"))
-        commands.add(FlagCommand.AllFormats)
-        commands.add(FlagCommand.PreferFreeFormats)
+    fun download(
+        uri: Uri,
+        downloadPath: File,
+        name: String? = null,
+        commands: ArrayList<ICommand>?,
+    ): Either<ILibraryException, CommandResponse> =
+        download(uri, downloadPath, name, commands, null)
 
-        return library.execute(uri, commands, callback)
+    fun download(
+        uri: Uri,
+        downloadPath: File,
+        name: String? = null,
+        commands: ArrayList<ICommand>?,
+        callback: ((Float, Long) -> Unit)?,
+    ): Either<ILibraryException, CommandResponse> {
+        val filename = getFileName(uri = uri, custom = name, commands = commands)
+
+        val overloadedCommands = commands ?: arrayListOf()
+
+        // Add Output command (for download requests only)
+        overloadedCommands.add(
+            OutputCommand("${downloadPath.absolutePath}${File.separator}$filename")
+        )
+
+        return library.execute(uri, overloadedCommands, callback).map {
+            CommandResponse.define(
+                message = it.message,
+                commands = it.commands!!,
+                elapsedTime = it.elapsedTime!!,
+                out = it.out!!
+            ) {
+                exitCode = it.exitCode
+                error = it.error
+            }
+        }
+    }
+
+    private fun getFileName(
+        uri: Uri,
+        custom: String? = null,
+        commands: ArrayList<ICommand>? = arrayListOf(),
+    ): String {
+        return extension("$uri")?.let { ext ->
+            custom?.let { it ->
+                Path(it).nameWithoutExtension.padIf(
+                    condition = !custom.isNullOrEmpty(),
+                    end = ext,
+                )
+            }
+        }
+            ?: when {
+                commands != null && (commands.contains(FlagCommand.AllFormats) ||
+                        commands.contains(FlagCommand.PreferFreeFormats))
+                -> {
+                    "%(title)s-%(format)s-%(format_id)s.%(ext)s"
+                }
+                else -> "%(title)s.%(ext)s"
+            }
     }
 }

@@ -9,8 +9,8 @@ import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
 abstract class BaseRepository(open var library: ILibrary) {
-    var fileName: String? = null
-    var extension: String? = null
+    protected var fileName: String? = null
+    protected var extension: String? = null
 
     fun fileName(uri: String): String? {
         val metadata = library.metadata(Uri.parse(uri))
