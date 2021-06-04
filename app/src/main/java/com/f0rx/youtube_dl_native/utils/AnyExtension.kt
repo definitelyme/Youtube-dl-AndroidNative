@@ -16,6 +16,24 @@ inline fun <C, Return> C.ifNullOrBlank(default: () -> Return): Return where C : 
     }
 }
 
+/**
+ * Returns `true` if this nullable is either `null` or empty.
+ */
+fun Any?.isNullOrBlank(): Boolean {
+    if (this == null) return true
+
+    return when (this) {
+        is String -> this.isEmpty() || this == ""
+        is List<*> -> this.isNullOrEmpty() || this.size == 0
+        is ArrayList<*> -> this.isNullOrEmpty() || this.size == 0
+        is Array<*> -> this.isNullOrEmpty() || this.size == 0
+        is Map<*, *> -> this.isNullOrEmpty() || this.size == 0
+        is Set<*> -> this.isNullOrEmpty() || this.size == 0
+        is Iterable<*> -> this.count() == 0
+        else -> false
+    }
+}
+
 infix fun <P1, IP, R> Function1<P1, IP>.andThen(f: (IP) -> R): (P1) -> R = forwardCompose(f)
 
 infix fun <P1, IP, R> Function1<P1, IP>.forwardCompose(f: (IP) -> R): (P1) -> R =
