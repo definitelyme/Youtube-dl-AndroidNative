@@ -1,20 +1,20 @@
 package com.f0rx.youtube_dl_native
 
-import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
+import android.os.Environment
 import androidx.appcompat.app.AppCompatActivity
 import com.f0rx.youtube_dl_native.domain.FormatCommand
+import com.f0rx.youtube_dl_native.domain.ICommand
 import com.f0rx.youtube_dl_native.domain.format.Format
 import com.f0rx.youtube_dl_native.domain.format.FormatBuilder
 import com.f0rx.youtube_dl_native.domain.format.format_fields.*
 import com.f0rx.youtube_dl_native.repositories.DownloadRepository
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
     private val repository: DownloadRepository by inject()
@@ -41,27 +41,41 @@ class MainActivity : AppCompatActivity() {
             ) {}
         }
 
-        val command = FormatCommand.Builder(builder)
+        val formatCommand = FormatCommand.Builder(builder)
             .plus()
-            .append(builder2)
+            .with(builder2)
             .generate()
+
+        val listOfCommands: ArrayList<ICommand> =
+            arrayListOf(
+                formatCommand,
+//                FlagCommand.AllFormats,
+//                FlagCommand.PreferFreeFormats
+            )
 
         scope.launch {
             val response = repository.download(
                 Uri.parse("https://www.youtube.com/watch?v=KzD3qlnhVZA"),
-                commands = arrayListOf(command),
-                path = getDir("videos", Context.MODE_PRIVATE),
-//                name = "my-awesome-video.3gp",
+                name = "another-sample-vid.3gp",
+//                downloadPath = getDir("videos", Context.MODE_PRIVATE),
+//                commands = listOfCommands,
+                downloadPath = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    "test"
+                ),
                 callback = { progress, eta ->
                     println("Download Progress: $progress")
-                    println("ETA in Seconds: ${eta}sec")
+                    println("ETA in (Seconds): ${eta}sec")
                 },
             )
 
             println("The output here")
             response.fold(
                 { println(it.message) }
-            ) { println(it.out) }
+            ) {
+                println(it.commands)
+                println(it.out)
+            }
         }
     }
 }
