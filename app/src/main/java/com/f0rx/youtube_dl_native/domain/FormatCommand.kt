@@ -21,7 +21,9 @@ class FormatCommand private constructor(
 
         fun or() = apply { this.computed.append("/") }
 
-        fun append(instance: FormatBuilder) = apply { this.computed.append("$instance") }
+        fun and() = apply { this.computed.append(",") }
+
+        fun with(instance: FormatBuilder) = apply { this.computed.append("$instance") }
 
         fun generate() = FormatCommand(this)
     }

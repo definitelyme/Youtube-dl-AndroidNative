@@ -8,5 +8,4 @@ abstract class FieldObject {
     } catch (e: Exception) {
         Either.left(FieldObjectException.invalid { })
     }
-
 }

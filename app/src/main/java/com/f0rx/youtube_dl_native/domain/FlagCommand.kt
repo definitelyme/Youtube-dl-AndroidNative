@@ -24,6 +24,11 @@ enum class FlagCommand : ICommand {
     ListFormats {
         override var flag: String = "-F"
         override var computed: String? = null
+    },
+
+    Verbose {
+        override var flag: String = "-v"
+        override var computed: String? = null
     };
 
     override fun toString(): String = flag
